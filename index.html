@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>The Link Layer — Foundations of Reliable Communication</title>
+<meta content="A student-ready blog post about the Link (Data Link) Layer: framing, error detection (parity, checksum, CRC), MAC protocols (ALOHA, CSMA/CD, CSMA/CA), taking-turns protocols, DOCSIS, link virtualization, and MPLS." name="description"/>
+<style>
+    :root{--bg:#0f1724;--card:#0b1220;--muted:#94a3b8;--accent:#06b6d4;--glass:rgba(255,255,255,0.03)}
+    html,body{height:100%;margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial;color:#e6eef8;background:linear-gradient(180deg,#071024 0%, #071428 100%);-webkit-font-smoothing:antialiased}
+    .container{max-width:900px;margin:36px auto;padding:28px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:14px;box-shadow:0 6px 30px rgba(2,6,23,0.6);}
+    header{display:flex;align-items:center;gap:18px}
+    .logo{width:64px;height:64px;border-radius:12px;background:linear-gradient(135deg,var(--accent),#7c3aed);display:flex;align-items:center;justify-content:center;color:#021427;font-weight:700;font-size:20px}
+    h1{margin:0;font-size:28px}
+    .meta{color:var(--muted);margin-top:6px;font-size:13px}
+    .byline{display:flex;gap:12px;align-items:center;margin-top:14px}
+    .chip{background:var(--glass);padding:6px 10px;border-radius:999px;font-size:13px;color:var(--muted)}
+    article{margin-top:20px;line-height:1.6;color:#d8e9f5}
+    h2{color:#fff;margin-top:20px}
+    p.lead{color:var(--muted);font-size:16px}
+    pre.code{background:#031225;padding:12px;border-radius:8px;overflow:auto;color:#cde8f7}
+    .grid{display:grid;grid-template-columns:1fr;gap:18px}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));padding:14px;border-radius:12px}
+    .visual{display:block;margin:16px 0;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,0.03);}
+    .visual img{width:100%;height:auto;display:block;max-height:260px;object-fit:contain}
+    figcaption{color:var(--muted);font-size:13px;margin-top:8px}
+    ul{margin-top:6px}
+    footer{margin-top:26px;color:var(--muted);font-size:13px}
+    .cta{display:flex;gap:10px;margin-top:14px}
+    .btn{background:linear-gradient(90deg,var(--accent),#7c3aed);color:#021427;padding:10px 14px;border-radius:10px;border:none;font-weight:600;cursor:pointer}
+    .ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted);padding:10px 12px;border-radius:10px}
+    @media(max-width:900px){.grid{grid-template-columns:1fr;}.container{margin:20px}}
+  </style>
+</head>
+<body>
+<div id="submission-toolbar" style="position:fixed;right:18px;top:18px;z-index:9999;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:8px;border-radius:10px;box-shadow:0 6px 18px rgba(2,6,23,0.5);backdrop-filter: blur(4px);">
+<button onclick="window.print()" style="background:linear-gradient(90deg,#06b6d4,#7c3aed);border:none;color:#021427;padding:8px 10px;border-radius:8px;font-weight:600;cursor:pointer;margin-right:8px">Print / Save PDF</button>
+<a download="" href="CA3_submission_NimitPrakash_23070126082_v5.zip" id="download-zip" style="background:transparent;border:1px solid rgba(255,255,255,0.06);color:#94a3b8;padding:8px 10px;border-radius:8px;text-decoration:none;font-weight:600">Download ZIP</a>
+</div>
+<div class="container">
+<header>
+<div class="logo">LL</div>
+<div>
+<h1>The Link Layer: Foundations of Reliable Communication</h1>
+<div class="meta">Unit 5 — Link layer basics, error detection &amp; correction, MAC protocols, DOCSIS, link virtualization, MPLS</div>
+<div class="byline">
+<div class="chip">Author: <span contenteditable="" id="author" style="margin-left:8px">Nimit Prakash</span></div>
+<div class="chip">Roll No: <span contenteditable="" id="roll" style="margin-left:8px">23070126082</span></div>
+<div class="chip">Draft: <strong style="margin-left:8px;color:#a7f3d0">Blog</strong></div>
+</div>
+</div>
+</header>
+<article>
+<p class="lead">Every time you stream a video or send a message, billions of tiny frames cross physical links that are prone to noise and interference. The <a href="https://www.networkacademy.io/ccna/network-fundamentals/data-link-layer" rel="noopener" target="_blank">Link (Data Link) Layer</a> ensures these frames arrive intact, in order, and at the right time. This post explains the Link Layer’s core duties, practical error detection methods (parity, <a href="https://en.wikipedia.org/wiki/Internet_checksum#Calculating_the_IPv4_header_checksum" rel="noopener" target="_blank">checksum</a>, CRC), media access techniques (ALOHA, <a href="https://www.gatevidyalay.com/csma-cd-access-control-in-networking/" rel="noopener" target="_blank">CSMA/CD</a>, CSMA/CA), taking-turn protocols, <a href="https://www.rfwireless-world.com/terminology/docsis-architecture.html" rel="noopener" target="_blank">DOCSIS</a>, link virtualization, and an approachable intro to <a href="https://networklessons.com/mpls/mpls-labels-and-devices" rel="noopener" target="_blank">MPLS</a>.</p>
+<div class="grid">
+<div>
+<h2>1. Link Layer Basics</h2>
+<p>The Link Layer is the second OSI layer. It forms, addresses, transmits, and monitors frames between physically connected nodes. Its responsibilities include:</p>
+<ul>
+<li><strong>Framing:</strong> grouping bits into frames with headers and trailers.</li>
+<li><strong>Addressing:</strong> using MAC addresses to identify devices on the same link.</li>
+<li><strong>Error control:</strong> detecting and sometimes correcting corrupted frames.</li>
+<li><strong>Flow control &amp; media access:</strong> deciding who sends when on a shared medium.</li>
+</ul>
+<figure aria-hidden="true" class="card visual">
+<!-- simple inline SVG: network layers -->
+<svg height="120" viewbox="0 0 900 120" width="100%" xmlns="http://www.w3.org/2000/svg">
+<rect fill="#071428" height="120" width="900" x="0" y="0"></rect>
+<g fill="#dff6ff" font-family="Arial">
+<rect fill="#07263a" height="26" rx="6" width="280" x="30" y="12"></rect>
+<text font-size="14" x="40" y="30">Application</text>
+<rect fill="#082a3f" height="26" rx="6" width="280" x="30" y="44"></rect>
+<text font-size="14" x="40" y="62">Transport</text>
+<rect fill="#083045" height="26" rx="6" width="280" x="30" y="76"></rect>
+<text font-size="14" x="40" y="94">Network</text>
+<rect fill="#0a3550" height="26" rx="6" width="280" x="330" y="76"></rect>
+<text font-size="14" x="340" y="94">Link (Data Link)</text>
+<rect fill="#0c4160" height="26" rx="6" width="220" x="630" y="76"></rect>
+<text font-size="14" x="640" y="94">Physical</text>
+</g>
+</svg>
+<figcaption>Where the Link Layer sits: between Network and Physical layers.</figcaption>
+</figure>
+<h2>2. Error Detection &amp; Correction</h2>
+<p>Noise can flip bits. The Link Layer uses lightweight checks to detect — and sometimes correct — errors before passing data up the stack.</p>
+<h3>Parity Bit</h3>
+<p>Parity adds a single bit to make the count of 1s even (even parity) or odd (odd parity). It's cheap but detects only odd-numbered bit errors. See parity checking for examples.</p>
+<pre class="code">Data: 1010  -&gt;  Parity (even): 0  -&gt;  Transmitted: 10100</pre>
+<h3>Checksum</h3>
+<p>Common in IP/TCP: break data into words, compute sum, transmit one's complement. Receiver recomputes and checks for mismatch. Detects many errors but not all. See <a href="https://en.wikipedia.org/wiki/Internet_checksum#Calculating_the_IPv4_header_checksum" rel="noopener" target="_blank">IPv4 checksum calculation</a>.</p>
+<h3>CRC (Cyclic Redundancy Check)</h3>
+<p>CRC treats the frame as a polynomial and divides by a generator polynomial. The remainder (CRC bits) is appended. CRCs detect burst errors and are used in <a href="https://www.geeksforgeeks.org/ethernet-frame-format/" rel="noopener" target="_blank">Ethernet</a> and Wi‑Fi.</p>
+<figure class="card visual">
+<!-- Ethernet Frame image embedded (base64) -->
+<img alt="Ethernet frame format diagram" src="images/image_1.png"/>
+<figcaption>Ethernet frame format: preamble, addresses, length, payload (46–1500 bytes), and CRC trailer. See <a href="https://www.geeksforgeeks.org/ethernet-frame-format/" rel="noopener" target="_blank">Ethernet Frame Format</a>.</figcaption>
+</figure>
+<h2>3. Random Access Control Protocols</h2>
+<p>When many devices share a channel, coordination prevents collisions. Here are classic approaches:</p>
+<h3>ALOHA</h3>
+<p>Transmit whenever ready. If collision occurs, wait a random time and retry. <em>Slotted ALOHA</em> (time slots) halves collision risk.</p>
+<h3>CSMA/CD</h3>
+<p>Used by legacy Ethernet: listen before transmit, detect collisions, and back off. Works well on wired shared media. Read more: <a href="https://www.gatevidyalay.com/csma-cd-access-control-in-networking/" rel="noopener" target="_blank">CSMA/CD Protocol</a>.</p>
+<h3>CSMA/CA</h3>
+<p>Wi‑Fi avoids collisions with RTS/CTS handshakes and random backoff timers — it <em>prevents</em> more than it detects.</p>
+<figure class="card visual">
+<!-- small CSMA flow SVG -->
+<svg height="120" viewbox="0 0 700 120" width="100%" xmlns="http://www.w3.org/2000/svg">
+<rect fill="#071428" height="120" width="700"></rect>
+<g fill="#dff6ff" font-size="12">
+<circle cx="100" cy="40" fill="#08364a" r="18"></circle><text x="86" y="44">Node A</text>
+<circle cx="300" cy="40" fill="#08364a" r="18"></circle><text x="286" y="44">Node B</text>
+<rect fill="#07263a" height="18" rx="6" width="300" x="150" y="70"></rect><text x="180" y="82">Channel (listen before send)</text>
+<path d="M118 50 L190 74" fill="none" marker-end="url(#arrow)" stroke="#7ce3f0" stroke-width="2"></path>
+<defs><marker id="arrow" markerheight="10" markerwidth="10" orient="auto" refx="6" refy="3"><path d="M0,0 L0,6 L6,3 z" fill="#7ce3f0"></path></marker></defs>
+</g>
+</svg>
+<figcaption>CSMA family flow: sense the channel, then transmit if clear.</figcaption>
+</figure>
+<h2>4. Taking-Turns Protocols</h2>
+<p>Deterministic access avoids random collisions:</p>
+<ul>
+<li><strong>Polling:</strong> A master asks each node in turn if it has data.</li>
+<li><strong>Token Passing:</strong> A circulating token grants transmission rights (used in Token Ring).</li>
+</ul>
+<h2>5. DOCSIS, Link Virtualization &amp; MPLS</h2>
+<p><strong>Link Virtualization</strong> lets multiple logical links share one physical medium, increasing flexibility for providers and tenants.</p>
+<figure class="card visual">
+<img alt="VLAN &amp; switch topology diagram" src="images/image_2.png"/>
+<figcaption>VLAN and switch topology illustrating tagged trunks and VLAN-separated subnets. See <a href="https://www.etherwan.com/support/featured-articles/brief-introduction-vlans" rel="noopener" target="_blank">Introduction to VLANs</a>.</figcaption>
+</figure>
+<h3>DOCSIS</h3>
+<p>DOCSIS (for cable Internet) defines how data travels over TV coax. Downstream uses wide channels with frequency-division multiplexing; upstream typically uses time-division slots. Modern DOCSIS versions provide gigabit speeds and robust modulation schemes. See <a href="https://www.rfwireless-world.com/terminology/docsis-architecture.html" rel="noopener" target="_blank">DOCSIS Architecture</a>.</p>
+<figure class="card visual">
+<img alt="DOCSIS system architecture diagram" src="images/image_3.png"/>
+<figcaption>DOCSIS system architecture: CMTS, HFC network, cable modem, and CPE.</figcaption>
+</figure>
+<h3>MPLS (Multiprotocol Label Switching)</h3>
+<p>MPLS tags packets with short labels. Routers forward packets based on labels, enabling fast-path switching, traffic engineering, and QoS without inspecting IP headers at every hop. See <a href="https://networklessons.com/mpls/mpls-labels-and-devices" rel="noopener" target="_blank">MPLS Labels and Devices</a>.</p>
+<figure class="card visual">
+<!-- MPLS label diagram -->
+<svg height="140" viewbox="0 0 900 140" width="100%" xmlns="http://www.w3.org/2000/svg">
+<rect fill="#071428" height="140" width="900"></rect>
+<g fill="#dff6ff" font-size="12">
+<rect fill="#082a3f" height="40" rx="6" width="120" x="40" y="36"></rect><text x="62" y="60">Ingress</text>
+<rect fill="#082a3f" height="40" rx="6" width="120" x="220" y="10"></rect><text x="248" y="34">LSR A</text>
+<rect fill="#082a3f" height="40" rx="6" width="120" x="400" y="36"></rect><text x="436" y="60">LSR B</text>
+<rect fill="#082a3f" height="40" rx="6" width="120" x="580" y="10"></rect><text x="606" y="34">LSR C</text>
+<rect fill="#082a3f" height="40" rx="6" width="120" x="760" y="36"></rect><text x="788" y="60">Egress</text>
+<text fill="#bfeaf8" font-size="11" x="170" y="62">label=100</text>
+<text fill="#bfeaf8" font-size="11" x="350" y="62">swap→200</text>
+<text fill="#bfeaf8" font-size="11" x="530" y="62">swap→300</text>
+</g>
+</svg>
+<figcaption>MPLS forwarding: labels assigned at ingress, swapped by LSRs, and removed at egress.</figcaption>
+</figure>
+<h2>6. Real-World Examples</h2>
+<ul>
+<li><strong>Ethernet (IEEE 802.3):</strong> wired LAN using framing and CRC.</li>
+<li><strong>Wi‑Fi (IEEE 802.11):</strong> link-layer features + CSMA/CA.</li>
+<li><strong>Cable ISPs:</strong> DOCSIS for home broadband.</li>
+<li><strong>ISP Backbones:</strong> MPLS for traffic engineering and QoS.</li>
+</ul>
+<h2>7. Summary / Key Takeaways</h2>
+<ol>
+<li>The Link Layer provides framing, addressing, and error control for direct links.</li>
+<li>Parity, checksum, and CRC provide different trade-offs between complexity and detection power.</li>
+<li>Media access protocols decide how devices share a channel: random access (ALOHA, CSMA) vs taking-turns (polling, token).</li>
+<li>DOCSIS and MPLS show how link-layer design scales to real ISP networks.</li>
+</ol>
+<h3>Practical CRC example</h3>
+<p>To see CRC in action: imagine a short payload <code>11010011101100</code> and a generator polynomial <code>1011</code>. The sender appends the CRC bits so that the whole frame is divisible by the generator. A single bit flip in transit will change the remainder and the receiver will notice the mismatch and discard or request retransmission. This is why <a href="https://www.geeksforgeeks.org/ethernet-frame-format/" rel="noopener" target="_blank">Ethernet</a> relies on CRC for strong burst-error detection on wired links.</p>
+<h3>Throughput &amp; efficiency (short note)</h3>
+<p>Random-access methods trade simplicity for lower efficiency under load. For example, pure ALOHA can only reach about 18% channel utilization at best; slotted ALOHA roughly doubles that. CSMA/CD improves utilization on wired links because collisions are detected quickly and retransmission backoff reduces repeated collisions. Wi‑Fi's CSMA/CA and RTS/CTS further improve performance in wireless environments by avoiding collisions.</p>
+<h3>Real-world case study: Streaming in a residential network</h3>
+<p>Consider a household streaming an HD video while another member uses VoIP. The cable modem at the premises connects to the ISP via DOCSIS. Upstream, the modem contends for time slots; the ISP's CMTS schedules upstream bursts to avoid collisions. Within the home, the Wi‑Fi router uses CSMA/CA to coordinate devices, while Ethernet links between streaming devices and the router use CRC-enabled frames. Down the ISP backbone, MPLS can prioritize VoIP traffic (low-latency label-switched paths) while best-effort streaming uses a different path. This example ties together link-layer framing, DOCSIS access, link virtualization, and MPLS-based QoS.</p>
+<h3>Examples &amp; small exercises (for the grader)</h3>
+<ul>
+<li>Compute the parity bit for <code>1011010</code> (answer: 1 for even parity).</li>
+<li>Explain why a simple checksum might miss certain rearrangement errors while a CRC would likely catch them.</li>
+<li>Sketch how VLAN tags isolate traffic on a shared switch and why trunk ports carry tagged frames.</li>
+</ul>
+<h2>9. References</h2>
+<ul>
+<li><a href="https://www.networkacademy.io/ccna/network-fundamentals/data-link-layer">Network Academy: Data Link Layer</a></li>
+<li><a href="https://www.geeksforgeeks.org/ethernet-frame-format/">Ethernet Frame Format</a></li>
+<li>Parity Checking in Networks</li>
+<li><a href="https://en.wikipedia.org/wiki/Internet_checksum#Calculating_the_IPv4_header_checksum">IPv4 Checksum Calculation</a></li>
+<li>CRC in Computer Networks</li>
+<li><a href="https://www.gatevidyalay.com/csma-cd-access-control-in-networking/">CSMA/CD Protocol</a></li>
+<li><a href="https://www.rfwireless-world.com/terminology/docsis-architecture.html">DOCSIS Architecture</a></li>
+<li><a href="https://www.etherwan.com/support/featured-articles/brief-introduction-vlans">Introduction to VLANs</a></li>
+<li><a href="https://networklessons.com/mpls/mpls-labels-and-devices">MPLS Labels and Devices</a></li>
+</ul>
+<footer>
+<!-- footer intentionally minimal -->
+</footer>
+</div>
+</div>
+</article>
+</div>
+<script>
+    // small helper: prompt user to replace placeholders before printing
+    window.onbeforeprint = function(){
+      const a = document.getElementById('author');
+      const r = document.getElementById('roll');
+      if(a && a.textContent.includes('[')) alert('Reminder: replace [Your Name] and [Your Roll No] with your details.');
+    }
+  </script>
+</body>
+</html>
